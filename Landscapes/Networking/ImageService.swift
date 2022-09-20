@@ -20,11 +20,6 @@ final class ImageService: ImageServiceProtocol {
     // MARK: - Internal
     
     func image(for url: URL, completion: @escaping (UIImage?) -> Void) -> Cancellable {
-        if let cachedImage = cachedImage(for: url) {
-            completion(cachedImage)
-            return CachedRequest()
-        }
-        
         let dataTask = URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
             var image: UIImage?
             
@@ -40,8 +35,16 @@ final class ImageService: ImageServiceProtocol {
                 self?.cacheImage(data, for: url)
             }
         }
-        
-        dataTask.resume()
+
+        cachedImage(for: url) { image in
+            if let image = image {
+                DispatchQueue.main.async {
+                    completion(image)
+                }
+            } else {
+                dataTask.resume()
+            }
+        }
         
         return dataTask
     }
@@ -59,16 +62,21 @@ final class ImageService: ImageServiceProtocol {
     private let maximumCacheSize: Int
     private var cache: [CachedImage] = []
     
-    private func cachedImage(for url: URL) -> UIImage? {
+    private func cachedImage(for url: URL, completion: @escaping (UIImage?) -> Void) {
         if let data = cache.first(where: { $0.url == url })?.data {
             print("Using Cache in Memory")
-            return UIImage(data: data)
-        } else if let data = try? Data(contentsOf: locationOnDesk(for: url)) {
-            print("Using Cache on Disk")
-            cacheImage(data, for: url)
-            return UIImage(data: data)
+            completion(UIImage(data: data))
+        } else {
+            DispatchQueue.global(qos: .userInitiated).async {
+                guard let data = try? Data(contentsOf: self.locationOnDesk(for: url)) else {
+                    completion(nil)
+                    return
+                }
+                print("Using Cache on Disk")
+                self.cacheImage(data, for: url, writeToDisk: false)
+                completion(UIImage(data: data))
+            }
         }
-        return nil
     }
     
     private func cacheImage(_ data: Data, for url: URL, writeToDisk: Bool = true) {
