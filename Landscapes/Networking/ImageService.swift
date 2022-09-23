@@ -20,32 +20,50 @@ final class ImageService: ImageServiceProtocol {
     // MARK: - Internal
     
     func image(for url: URL, completion: @escaping (UIImage?) -> Void) -> Cancellable {
-        let dataTask = URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
-            var image: UIImage?
-            
-            defer {
-                DispatchQueue.main.async {
-                    completion(image)
+        let dataTask = URLSession.shared.dataTask(with: url) { [weak self] data, _, error in
+            let result: Result<Data, Error>? = {
+                if let data = data {
+                    // Success
+                    return .success(data)
+                } else if let error = error, (error as NSError).code != URLError.cancelled.rawValue {
+                    // Failure
+                    return .failure(error)
+                } else {
+                    // Cancelled
+                    return nil
                 }
-            }
-            
-            if let data = data {
-                image = UIImage(data: data)
-                print(url)
-                self?.cacheImage(data, for: url)
+            }()
+
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let data):
+                    print("Data Task Succeeded")
+                    completion(UIImage(data: data))
+                    self?.cacheImage(data, for: url)
+                case .failure:
+                    print("Data Task Failed")
+                    completion(nil)
+                case .none:
+                    print("Data Task Cancelled")
+                    break
+                }
             }
         }
 
+        // Request Cached Image
         cachedImage(for: url) { image in
             if let image = image {
+                // Execute Handler on Main Thread
                 DispatchQueue.main.async {
+                    // Execute Handler
                     completion(image)
                 }
             } else {
+                // Fetch Image
                 dataTask.resume()
             }
         }
-        
+
         return dataTask
     }
     
@@ -55,10 +73,6 @@ final class ImageService: ImageServiceProtocol {
         let url: URL
         let data: Data
     }
-    private struct CachedRequest: Cancellable {
-        func cancel() {}
-    }
-    
     private let maximumCacheSize: Int
     private var cache: [CachedImage] = []
     
