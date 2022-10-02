@@ -27,6 +27,7 @@
 		1A123D2328A469CB000A5AEE /* LandscapesViewModelProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A123D2228A469CB000A5AEE /* LandscapesViewModelProtocol.swift */; };
 		1A123D2628A46A28000A5AEE /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A123D2528A46A28000A5AEE /* Constants.swift */; };
 		1A123D2A28A46FA3000A5AEE /* LandscapesTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A123D2928A46FA3000A5AEE /* LandscapesTableViewCell.swift */; };
+		1ACC624228E9BC63001CA4FD /* Int+Size.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1ACC624128E9BC63001CA4FD /* Int+Size.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -71,6 +72,7 @@
 		1A123D2228A469CB000A5AEE /* LandscapesViewModelProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandscapesViewModelProtocol.swift; sourceTree = "<group>"; };
 		1A123D2528A46A28000A5AEE /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		1A123D2928A46FA3000A5AEE /* LandscapesTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LandscapesTableViewCell.swift; sourceTree = "<group>"; };
+		1ACC624128E9BC63001CA4FD /* Int+Size.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Int+Size.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -162,6 +164,7 @@
 		1A123D1828A46594000A5AEE /* Data */ = {
 			isa = PBXGroup;
 			children = (
+				1ACC624028E9BC55001CA4FD /* Extensions */,
 				1A123D2728A46AAC000A5AEE /* DataError */,
 				1A123D2428A46A1D000A5AEE /* Constants */,
 				1A123D2128A4695E000A5AEE /* ViewModels */,
@@ -214,6 +217,14 @@
 				1A123D2928A46FA3000A5AEE /* LandscapesTableViewCell.swift */,
 			);
 			path = View;
+			sourceTree = "<group>";
+		};
+		1ACC624028E9BC55001CA4FD /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				1ACC624128E9BC63001CA4FD /* Int+Size.swift */,
+			);
+			path = Extensions;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -349,6 +360,7 @@
 			files = (
 				1A044C4D28AD52FB0033D688 /* Cancellable.swift in Sources */,
 				1A123D1628A4641F000A5AEE /* Landscape.swift in Sources */,
+				1ACC624228E9BC63001CA4FD /* Int+Size.swift in Sources */,
 				1A123D2028A467CA000A5AEE /* DataError.swift in Sources */,
 				1A123D2328A469CB000A5AEE /* LandscapesViewModelProtocol.swift in Sources */,
 				1A123D1C28A465BD000A5AEE /* ApiClientProtocol.swift in Sources */,
