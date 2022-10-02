@@ -12,9 +12,11 @@ final class ImageService: ImageServiceProtocol {
     
     // MARK: - Initializer
     
-    init(maximumCacheSize: Int) {
-        self.maximumCacheSize = maximumCacheSize
+    init(maximumCacheSizeInMemory: Int, maximumCacheSizeOnDisk: Int) {
+        self.maximumCacheSizeInMemory = maximumCacheSizeInMemory
+        self.maximumCacheSizeOnDisk = maximumCacheSizeOnDisk
         createImageCacheDirectory()
+        updateCacheOnDisk()
     }
     
     // MARK: - Internal
@@ -73,7 +75,9 @@ final class ImageService: ImageServiceProtocol {
         let url: URL
         let data: Data
     }
-    private let maximumCacheSize: Int
+    private let maximumCacheSizeInMemory: Int
+    private let maximumCacheSizeOnDisk: Int
+    private let cacheOnDiskQueue = DispatchQueue(label: "Cache on disk", qos: .utility)
     private var cache: [CachedImage] = []
     
     private func cachedImage(for url: URL, completion: @escaping (UIImage?) -> Void) {
@@ -98,7 +102,7 @@ final class ImageService: ImageServiceProtocol {
             result + cachedImage.data.count
         }
         
-        while cacheSize > maximumCacheSize {
+        while cacheSize > maximumCacheSizeInMemory {
             let oldestCachedImage = cache.removeFirst()
             cacheSize -= oldestCachedImage.data.count
         }
@@ -107,7 +111,7 @@ final class ImageService: ImageServiceProtocol {
         cache.append(cachedImage)
 
         if writeToDisk {
-            DispatchQueue.global(qos: .utility).async {
+            cacheOnDiskQueue.async {
                 self.writeImageToDisk(data, for: url)
             }
         }
@@ -134,9 +138,57 @@ final class ImageService: ImageServiceProtocol {
     private func writeImageToDisk(_ data: Data, for url: URL) {
         do {
             try data.write(to: locationOnDesk(for: url))
+            updateCacheOnDisk()
         } catch {
             print("Unable to Write Image to Disk \(error)")
         }
+    }
+
+    private func updateCacheOnDisk() {
+        do {
+            let resourceKeys: [URLResourceKey] = [.creationDateKey, .totalFileAllocatedSizeKey]
+            let contents = try FileManager.default.contentsOfDirectory(
+                at: imageCacheDirectory,
+                includingPropertiesForKeys: resourceKeys,
+                options: []
+            )
+
+            var files = try contents.compactMap { url -> File? in
+                let resourcesValues = try url.resourceValues(forKeys: Set(resourceKeys))
+
+                guard let createdAt = resourcesValues.creationDate,
+                      let size = resourcesValues.totalFileAllocatedSize
+                else {
+                    return nil
+                }
+                return File(url: url, size: size, createdAt: createdAt)
+            }
+            .sorted { $0.createdAt < $1.createdAt }
+
+            var cacheSize = files.reduce(0) { result, cachedImage -> Int in
+                result + cachedImage.size
+            }
+
+            print("\(files.count) Images Cached, Size on Disk \(cacheSize / .kilobyte) KB")
+
+            while cacheSize > maximumCacheSizeOnDisk {
+                guard !files.isEmpty else {
+                    break
+                }
+
+                let oldestCachedImage = files.removeFirst()
+                try FileManager.default.removeItem(at: oldestCachedImage.url)
+                cacheSize -= oldestCachedImage.size
+            }
+        } catch {
+            print("Unable to update cache on disk \(error)")
+        }
+    }
+
+    private struct File {
+        let url: URL
+        let size: Int
+        let createdAt: Date
     }
 }
 
