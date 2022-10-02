@@ -29,11 +29,16 @@ final class LandscapesViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        setupTableView()
+        setupViews()
         viewModel.fetchLandscapes(url: Constants.landscapesData)
     }
 
     // MARK: - UITableView
+
+    private func setupViews() {
+        title = "Landscapes"
+        setupTableView()
+    }
 
     private func setupTableView() {
         view.addSubview(tableView)
