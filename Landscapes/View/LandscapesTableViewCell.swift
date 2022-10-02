@@ -68,7 +68,7 @@ final class LandscapesTableViewCell: UITableViewCell {
     private let landscapeImageView: UIImageView = UIImageView(frame: .zero)
     private var imageRequest: Cancellable?
     private var horizontalStackView = UIStackView(frame: .zero)
-    private lazy var imageService = ImageService(maximumCacheSize: 512 * 1024)
+    private lazy var imageService = ImageService(maximumCacheSizeInMemory: 512 * .kilobyte, maximumCacheSizeOnDisk: 50 * .kilobyte)
     private lazy var landscapeImageViewWidthConstraint: NSLayoutConstraint = {
         landscapeImageView.widthAnchor.constraint(equalToConstant: 0)
     }()
